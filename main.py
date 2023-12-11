@@ -6,7 +6,7 @@ import numpy as np
 click_count = 0
 start = 0
 end = 0
-img_file_path = '/Users/admin/Desktop/PhuongDongXuan.png'
+img_file_path = 'PhuongDongXuan.png'
 image = cv2.imread(img_file_path)
 image_copy = cv2.imread(img_file_path)
 G = ox.graph_from_bbox(21.0414,21.03647,105.8458,105.85315,network_type='all')
