@@ -2,9 +2,15 @@ import osmnx as ox
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-from Dijkstra import dijkstra_path
-from Astar import astar_path
-from BFS import bfs
+
+click_count = 0
+start = 0
+end = 0
+img_file_path = 'PhuongDongXuan.png'
+image = cv2.imread(img_file_path)
+image_copy = cv2.imread(img_file_path)
+G = ox.graph_from_bbox(21.0414,21.03647,105.8458,105.85315,network_type='all')
+height, width, _ = image.shape
 
 def convert_coords(img_coords):
     # Tọa độ pixel của ảnh
@@ -79,18 +85,12 @@ def click_event(event, x, y, flags, param):
         elif click_count == 1:
             img_coords = (x, height - y)
             osm_coords = convert_coords(img_coords)
-            osm_node = ox.distance.nearest_nodes(G, osm_coords[0], osm_coords[1]) #check
+            osm_node = ox.distance.nearest_nodes(G, osm_coords[0], osm_coords[1])
             img_node = convert_coords_reverse((G.nodes[osm_node]['x'], G.nodes[osm_node]['y']))
             cv2.line(image, (x, y), (img_node[0], height + img_node[1]), (0, 255, 0), 2)
             cv2.imshow('Image', image)
             end = osm_node
-            
-            # Giao diện cho 3 thuật toán 
-            ans = dijkstra_path(G, start, end, weight='length') 
-            ans = astar_path(G, start, end, weight='length')
-            ans = bfs(G, start, end)
-            ###########################################
-            
+            ans = ox.shortest_path(G,orig= start,dest=end,weight='length')
             for i in range(len(ans) - 1):
                 node1 = ans[i]
                 node2 = ans[i + 1]
@@ -107,22 +107,7 @@ def click_event(event, x, y, flags, param):
         click_count += 1
         if click_count > 2:
             click_count = 0
-            
-
-    
-click_count = 0
-start = 0
-end = 0
-img_file_path = 'PhuongDongXuan.png'
-image = cv2.imread(img_file_path)
-image_copy = cv2.imread(img_file_path)
-G = ox.graph_from_bbox(21.0414,21.03647,105.8458,105.85315,network_type='all' )
-height, width, _ = image.shape
 
 cv2.imshow('Image', image)
 cv2.setMouseCallback('Image', click_event)
 cv2.waitKey(0)
-
-
-
-
