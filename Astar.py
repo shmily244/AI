@@ -19,7 +19,7 @@ def astar_path(G, start, goal, weight='length'):
 
     # Estimated total cost from start to goal through y
     f_score = {start: heuristic(start, goal, G)}
-
+    
     while open_set:
         current = heapq.heappop(open_set)[1]
 
@@ -28,6 +28,7 @@ def astar_path(G, start, goal, weight='length'):
             while current in came_from:
                 path.append(current)
                 current = came_from[current]
+            path.append(start)
             return path[::-1]
 
         closed_set.add(current)
