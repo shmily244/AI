@@ -40,7 +40,7 @@ def astar_path(G, start, goal, weight='length'):
                 edge_length = G[current][neighbor]['length']
             else:
                 # Xử lý khi 'length' không tồn tại, gán edge_length = 0.00001
-                edge_length = 1
+                edge_length = 0.00001
             tentative_g_score = g_score[current] + edge_length
 
             if neighbor not in [i[1] for i in open_set]:
