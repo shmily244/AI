@@ -87,8 +87,8 @@ def click_event(event, x, y, flags, param):
             
             # Giao diện cho 3 thuật toán 
             ans = dijkstra_path(G, start, end, weight='length') 
-            ans = astar_path(G, start, end, weight='length')
-            ans = bfs(G, start, end)
+            # ans = astar_path(G, start, end, weight='length')
+            # ans = bfs(G, start, end)
             ###########################################
             
             for i in range(len(ans) - 1):
