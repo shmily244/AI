@@ -2,9 +2,12 @@ import osmnx as ox
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+from PIL import Image, ImageTk
 from Dijkstra import dijkstra_path
 from Astar import astar_path
 from BFS import bfs
+import tkinter as tk
+from tkinter import simpledialog
 
 def convert_coords(img_coords):
     # Tọa độ pixel của ảnh
@@ -29,12 +32,12 @@ def convert_coords(img_coords):
 
     # Chuyển đổi từ tọa độ pixel sang tọa độ địa lý
     osm_coords = (
-        img_coords[0] * pixel_to_degree_x + osm_point1[0],
-        img_coords[1] * pixel_to_degree_y + osm_point2[1]
+        round(img_coords[0] * pixel_to_degree_x + osm_point1[0], 5),
+        round(img_coords[1] * pixel_to_degree_y + osm_point2[1], 5)
     )
 
     return osm_coords
-
+# Hàm in tọa độ
 def convert_coords_reverse(osm_coords):
     # Tọa độ pixel của ảnh
     img_point1 = (0, 0)  # Góc trái trên
@@ -63,17 +66,63 @@ def convert_coords_reverse(osm_coords):
 
     return img_coords
 
+# Hàm in tọa độ node
+def draw_coordinates(img, coords, text):
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 0.7
+    font_thickness = 1
+    color = (14,59,255) 
+    cv2.putText(img, text, coords, font, font_scale, color, font_thickness, cv2.LINE_AA)
+#Hàm chọn thuật toán
+def choose_algorithm():
+    selected_algorithm = [None]
+
+    def set_algorithm(algo):
+        selected_algorithm[0] = algo
+        algorithm_window.destroy()
+
+    algorithm_window = tk.Tk()
+    algorithm_window.title("Choose Algorithm")
+
+    # Calculate window position to center it on the screen
+    window_width = 300
+    window_height = 200
+    screen_width = algorithm_window.winfo_screenwidth()
+    screen_height = algorithm_window.winfo_screenheight()
+    x_position = (screen_width - window_width) // 2
+    y_position = (screen_height - window_height) // 2
+    algorithm_window.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
+
+    button_font = ("Arial", 12)  # Adjust the font size as needed
+
+    dijkstra_button = tk.Button(algorithm_window, text="Dijkstra", width=15, height=2, font=button_font, command=lambda: set_algorithm('dijkstra'))
+    dijkstra_button.pack(side=tk.TOP, pady=5)
+
+    astar_button = tk.Button(algorithm_window, text="A* (Astar)", width=15, height=2, font=button_font, command=lambda: set_algorithm('astar'))
+    astar_button.pack(side=tk.TOP, pady=5)
+
+    bfs_button = tk.Button(algorithm_window, text="BFS", width=15, height=2, font=button_font, command=lambda: set_algorithm('bfs'))
+    bfs_button.pack(side=tk.TOP, pady=5)
+
+    algorithm_window.mainloop()
+
+    return selected_algorithm[0]
+
+
+        
 def click_event(event, x, y, flags, param):
-    global click_count
+    global click_count, selected_algorithm
+
     if event == cv2.EVENT_LBUTTONDOWN:
-        global image
+        global image, start, end
         if click_count == 0:
             global start
             img_coords = (x, height - y)
             osm_coords = convert_coords(img_coords)
             osm_node = ox.distance.nearest_nodes(G, osm_coords[0], osm_coords[1])
             img_node = convert_coords_reverse((G.nodes[osm_node]['x'], G.nodes[osm_node]['y']))
-            cv2.line(image, (x, y), (img_node[0], height + img_node[1]), (0, 255, 0), 2)
+            cv2.line(image, (x, y), (img_node[0], height + img_node[1]), (255, 125, 38), 7)
+            draw_coordinates(image, (x, y), f'Start{osm_coords}')
             cv2.imshow('Image', image)
             start = osm_node
         elif click_count == 1:
@@ -81,25 +130,41 @@ def click_event(event, x, y, flags, param):
             osm_coords = convert_coords(img_coords)
             osm_node = ox.distance.nearest_nodes(G, osm_coords[0], osm_coords[1]) #check
             img_node = convert_coords_reverse((G.nodes[osm_node]['x'], G.nodes[osm_node]['y']))
-            cv2.line(image, (x, y), (img_node[0], height + img_node[1]), (0, 255, 0), 2)
+            cv2.line(image, (x, y), (img_node[0], height + img_node[1]), (255, 125, 38), 7)
+            draw_coordinates(image, (x, y), f'End{osm_coords}')
             cv2.imshow('Image', image)
             end = osm_node
-            
-            # Giao diện cho 3 thuật toán 
-            # ans = dijkstra_path(G, start, end, weight='length') 
-            ans = astar_path(G, start, end, weight='length')
-            # ans = bfs(G, start, end)
-            ###########################################
-            
-            for i in range(len(ans) - 1):
-                node1 = ans[i]
-                node2 = ans[i + 1]
-                # Lấy tọa độ của node1 và node2 từ đồ thị G
-                node1_img = convert_coords_reverse((G.nodes[node1]['x'], G.nodes[node1]['y']))
-                node2_img = convert_coords_reverse((G.nodes[node2]['x'], G.nodes[node2]['y']))
-                # Vẽ đường nối giữa node1 và node2 trên ảnh
-                cv2.line(image, (node1_img[0],height+node1_img[1]), (node2_img[0],height+node2_img[1]), (0, 255, 0), 2)
+
+            selected_algorithm = choose_algorithm()
+            print(f"Selected Algorithm: {selected_algorithm}")
+
+            ans = None
+            if selected_algorithm == 'dijkstra':
+                ans = dijkstra_path(G, start, end, weight='length')
+            elif selected_algorithm == 'astar':
+                ans = astar_path(G, start, end, weight='length')
+            elif selected_algorithm == 'bfs':
+                ans = bfs(G, start, end)
+
+            if ans:
+                for i in range(len(ans) - 1):
+                    node1 = ans[i]
+                    node2 = ans[i + 1]
+                    node1_img = convert_coords_reverse((G.nodes[node1]['x'], G.nodes[node1]['y']))
+                    node2_img = convert_coords_reverse((G.nodes[node2]['x'], G.nodes[node2]['y']))
+                    cv2.circle(image, (x, y), 10, (0, 0, 255), -1)
+                    cv2.imshow('Image', image)
+                    cv2.line(image, (node1_img[0], height + node1_img[1]), (node2_img[0], height + node2_img[1]), (255, 125, 38), 7)
+                    cv2.imshow('Image', image)
+                    print(f'Node {i + 1}: OSM Coordinates = ({node1_img[0]:.5f}, {node1_img[1]:.5f})')
+                    cv2.waitKey(100)
+
+                cv2.drawMarker(image, (x, y), (0, 0, 255), markerType=cv2.MARKER_CROSS, markerSize=10, thickness=2)
                 cv2.imshow('Image', image)
+
+                # Use cv2.waitKey() with a short delay
+                cv2.waitKey(1)
+
         else:
             image = image_copy.copy()
             cv2.imshow('Image', image)
@@ -107,22 +172,28 @@ def click_event(event, x, y, flags, param):
         click_count += 1
         if click_count > 2:
             click_count = 0
-            
 
-    
+
+            
 click_count = 0
 start = 0
 end = 0
+selected_algorithm = None  # Initialize selected_algorithm
+tk_root = None  # Initialize Tkinter root window
 img_file_path = 'PhuongDongXuan.png'
 image = cv2.imread(img_file_path)
 image_copy = cv2.imread(img_file_path)
-G = ox.graph_from_bbox(21.0414,21.03647,105.8458,105.85315,network_type='all' )
+G = ox.graph_from_bbox(21.0414, 21.03647, 105.8458, 105.85315, network_type='all')
 height, width, _ = image.shape
+
+# Chọn thuật toán trước khi thực hiện tìm đường
+choose_algorithm()
 
 cv2.imshow('Image', image)
 cv2.setMouseCallback('Image', click_event)
-cv2.waitKey(0)
 
+while cv2.getWindowProperty('Image', 0) >= 0:
+    cv2.waitKey(1)
 
-
-
+# Close all OpenCV windows
+cv2.destroyAllWindows()
