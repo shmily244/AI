@@ -186,8 +186,6 @@ image_copy = cv2.imread(img_file_path)
 G = ox.graph_from_bbox(21.0414, 21.03647, 105.8458, 105.85315, network_type='all')
 height, width, _ = image.shape
 
-# Chọn thuật toán trước khi thực hiện tìm đường
-choose_algorithm()
 
 cv2.imshow('Image', image)
 cv2.setMouseCallback('Image', click_event)
