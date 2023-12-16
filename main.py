@@ -8,6 +8,7 @@ from Astar import astar_path
 from BFS import bfs
 import tkinter as tk
 from tkinter import simpledialog
+import copy
 
 def convert_coords(img_coords):
     # Tọa độ pixel của ảnh
@@ -121,20 +122,20 @@ def click_event(event, x, y, flags, param):
             osm_coords = convert_coords(img_coords)
             osm_node = ox.distance.nearest_nodes(G, osm_coords[0], osm_coords[1])
             img_node = convert_coords_reverse((G.nodes[osm_node]['x'], G.nodes[osm_node]['y']))
-            cv2.line(image, (x, y), (img_node[0], height + img_node[1]), (255, 125, 38), 7)
+            node_copy = copy.deepcopy(img_node)
             draw_coordinates(image, (x, y), f'Start{osm_coords}')
-            cv2.imshow('Image', image)
+            cv2.imshow('Image', image)  
+            cv2.line(image, (x, y), (img_node[0], height + img_node[1]), (255, 125, 38), 7)
             start = osm_node
         elif click_count == 1:
             img_coords = (x, height - y)
             osm_coords = convert_coords(img_coords)
             osm_node = ox.distance.nearest_nodes(G, osm_coords[0], osm_coords[1]) #check
             img_node = convert_coords_reverse((G.nodes[osm_node]['x'], G.nodes[osm_node]['y']))
-            cv2.line(image, (x, y), (img_node[0], height + img_node[1]), (255, 125, 38), 7)
             draw_coordinates(image, (x, y), f'End{osm_coords}')
+            cv2.line(image, (x, y), (img_node[0], height + img_node[1]), (255, 125, 38), 7)
             cv2.imshow('Image', image)
             end = osm_node
-
             selected_algorithm = choose_algorithm()
             print(f"Selected Algorithm: {selected_algorithm}")
 
@@ -147,6 +148,29 @@ def click_event(event, x, y, flags, param):
                 ans = bfs(G, start, end)
 
             if ans:
+                cv2.imshow('Image', image)
+                image_2 = image.copy()
+                for i in range(len(ans) - 1):
+                    node1 = ans[i]
+                    node2 = ans[i + 1]
+                    node1_img = convert_coords_reverse((G.nodes[node1]['x'], G.nodes[node1]['y']))
+                    node2_img = convert_coords_reverse((G.nodes[node2]['x'], G.nodes[node2]['y']))
+                    cv2.circle(image, (x, y), 10, (0, 0, 255), -1)
+                    cv2.imshow('Image', image)
+                    cv2.line(image, (node1_img[0], height + node1_img[1]), (node2_img[0], height + node2_img[1]), (0, 255, 0), 7)
+                    cv2.imshow('Image', image)
+                    print(f'Node {i + 1}: OSM Coordinates = ({node1_img[0]:.5f}, {node1_img[1]:.5f})')
+                    cv2.waitKey(20)
+                    
+                    for edge in G.edges(node1):
+                        u, v = edge
+                        u_img = convert_coords_reverse((G.nodes[u]['x'], G.nodes[u]['y']))
+                        v_img = convert_coords_reverse((G.nodes[v]['x'], G.nodes[v]['y']))
+                        cv2.line(image, (u_img[0], height + u_img[1]), (v_img[0], height + v_img[1]), (0, 255, 0), 7)
+                        cv2.imshow('Image', image)
+                        cv2.waitKey(20)
+                image = image_2.copy()
+                cv2.imshow('Image', image) 
                 for i in range(len(ans) - 1):
                     node1 = ans[i]
                     node2 = ans[i + 1]
@@ -157,8 +181,6 @@ def click_event(event, x, y, flags, param):
                     cv2.line(image, (node1_img[0], height + node1_img[1]), (node2_img[0], height + node2_img[1]), (255, 125, 38), 7)
                     cv2.imshow('Image', image)
                     print(f'Node {i + 1}: OSM Coordinates = ({node1_img[0]:.5f}, {node1_img[1]:.5f})')
-                    cv2.waitKey(100)
-
                 cv2.drawMarker(image, (x, y), (0, 0, 255), markerType=cv2.MARKER_CROSS, markerSize=10, thickness=2)
                 cv2.imshow('Image', image)
 
