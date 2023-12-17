@@ -8,12 +8,11 @@ from Astar import astar_path
 from BFS import bfs
 import tkinter as tk
 from tkinter import simpledialog
-import copy
 
 def convert_coords(img_coords):
     # Tọa độ pixel của ảnh
     img_point1 = (0, 0)  # Góc trái trên
-    img_point2 = (1358, 990)  # Góc phải dưới
+    img_point2 = (width, height)  # Góc phải dưới
 
     # Tọa độ tương ứng của 2 điểm trên bản đồ OSM
     osm_point1 = (105.84587, 21.04141)
@@ -42,7 +41,7 @@ def convert_coords(img_coords):
 def convert_coords_reverse(osm_coords):
     # Tọa độ pixel của ảnh
     img_point1 = (0, 0)  # Góc trái trên
-    img_point2 = (1358, 990)  # Góc phải dưới
+    img_point2 = (width, height)  # Góc phải dưới
 
     # Tọa độ tương ứng của 2 điểm trên bản đồ OSM
     osm_point1 = (105.84587, 21.04141)
@@ -151,7 +150,7 @@ def click_event(event, x, y, flags, param):
             elif selected_algorithm == 'bfs':
                 ans = bfs(G, start, end)
             image_2 = image.copy()
-            cv2.line(image, (node1_start[0], node1_start[1]), (node2_start[0], height + node2_start[1]), (0, 255, 0), 7)
+            cv2.line(image, (node1_start[0], node1_start[1]), (node2_start[0], height + node2_start[1]), (0, 255, 0), 5)
             if ans:
                 for i in range(len(ans) - 1):
                     node1 = ans[i]
@@ -160,7 +159,7 @@ def click_event(event, x, y, flags, param):
                     node2_img = convert_coords_reverse((G.nodes[node2]['x'], G.nodes[node2]['y']))
                     cv2.circle(image, (x, y), 10, (0, 0, 255), -1)
                     cv2.imshow('Image', image)
-                    cv2.line(image, (node1_img[0], height + node1_img[1]), (node2_img[0], height + node2_img[1]), (0, 255, 0), 7)
+                    cv2.line(image, (node1_img[0], height + node1_img[1]), (node2_img[0], height + node2_img[1]), (0, 255, 0), 5)
                     cv2.imshow('Image', image)
                     print(f'Node {i + 1}: OSM Coordinates = ({node1_img[0]:.5f}, {node1_img[1]:.5f})')
                     cv2.waitKey(10)
@@ -169,13 +168,13 @@ def click_event(event, x, y, flags, param):
                         u, v = edge
                         u_img = convert_coords_reverse((G.nodes[u]['x'], G.nodes[u]['y']))
                         v_img = convert_coords_reverse((G.nodes[v]['x'], G.nodes[v]['y']))
-                        cv2.line(image, (u_img[0], height + u_img[1]), (v_img[0], height + v_img[1]), (0, 255, 0), 7)
+                        cv2.line(image, (u_img[0], height + u_img[1]), (v_img[0], height + v_img[1]), (0, 255, 0), 5)
                         cv2.imshow('Image', image)
                         cv2.waitKey(10)
                 image = image_2.copy()
                 cv2.imshow('Image', image)
-                cv2.line(image, (node1_start[0], node1_start[1]), (node2_start[0], height + node2_start[1]), (255, 125, 38), 7)
-                cv2.line(image, (node1_end[0], node1_end[1]), (node2_end[0], height + node2_end[1]), (255, 125, 38), 7)
+                cv2.line(image, (node1_start[0], node1_start[1]), (node2_start[0], height + node2_start[1]), (255, 125, 38), 5)
+                cv2.line(image, (node1_end[0], node1_end[1]), (node2_end[0], height + node2_end[1]), (255, 125, 38), 5)
                 for i in range(len(ans) - 1):
                     node1 = ans[i]
                     node2 = ans[i + 1]
@@ -183,7 +182,7 @@ def click_event(event, x, y, flags, param):
                     node2_img = convert_coords_reverse((G.nodes[node2]['x'], G.nodes[node2]['y']))
                     cv2.circle(image, (x, y), 10, (0, 0, 255), -1)
                     cv2.imshow('Image', image)
-                    cv2.line(image, (node1_img[0], height + node1_img[1]), (node2_img[0], height + node2_img[1]), (255, 125, 38), 7)
+                    cv2.line(image, (node1_img[0], height + node1_img[1]), (node2_img[0], height + node2_img[1]), (255, 125, 38), 5)
                     cv2.imshow('Image', image)
                     print(f'Node {i + 1}: OSM Coordinates = ({node1_img[0]:.5f}, {node1_img[1]:.5f})')
                 cv2.drawMarker(image, (x, y), (0, 0, 255), markerType=cv2.MARKER_CROSS, markerSize=10, thickness=2)
@@ -209,11 +208,23 @@ selected_algorithm = None  # Initialize selected_algorithm
 tk_root = None  # Initialize Tkinter root window
 img_file_path = 'PhuongDongXuan.png'
 image = cv2.imread(img_file_path)
-image_copy = cv2.imread(img_file_path)
 G = ox.graph_from_bbox(21.0414, 21.03647, 105.8458, 105.85315, network_type='all')
 height, width, _ = image.shape
 
+print(height,width)
+screen_width, screen_height = 900, 1080  # Thay đổi theo kích thước thực tế của màn hình
 
+
+# Tính tỉ lệ để vừa với màn hình
+scale_factor_width = screen_width / width
+scale_factor_height = screen_height / height
+scale_factor = min(scale_factor_width, scale_factor_height)
+
+# Điều chỉnh kích thước ảnh
+image = cv2.resize(image, None, fx=scale_factor, fy=scale_factor)
+image_copy = image.copy()
+height, width, _ = image.shape
+print(height, width)
 cv2.imshow('Image', image)
 cv2.setMouseCallback('Image', click_event)
 
