@@ -115,30 +115,32 @@ def click_event(event, x, y, flags, param):
     global click_count, selected_algorithm
 
     if event == cv2.EVENT_LBUTTONDOWN:
-        global image, start, end
+        global image, start, end, node1_start, node2_start, node1_end, node2_end
         if click_count == 0:
             global start
             img_coords = (x, height - y)
             osm_coords = convert_coords(img_coords)
             osm_node = ox.distance.nearest_nodes(G, osm_coords[0], osm_coords[1])
             img_node = convert_coords_reverse((G.nodes[osm_node]['x'], G.nodes[osm_node]['y']))
-            node_copy = copy.deepcopy(img_node)
             draw_coordinates(image, (x, y), f'Start{osm_coords}')
             cv2.imshow('Image', image)  
-            cv2.line(image, (x, y), (img_node[0], height + img_node[1]), (255, 125, 38), 7)
+            # cv2.line(image, (x, y), (img_node[0], height + img_node[1]), (255, 125, 38), 7)
             start = osm_node
+            node1_start = (x,y)
+            node2_start = img_node
         elif click_count == 1:
             img_coords = (x, height - y)
             osm_coords = convert_coords(img_coords)
             osm_node = ox.distance.nearest_nodes(G, osm_coords[0], osm_coords[1]) #check
             img_node = convert_coords_reverse((G.nodes[osm_node]['x'], G.nodes[osm_node]['y']))
+            node1_end = (x,y)
+            node2_end = img_node
             draw_coordinates(image, (x, y), f'End{osm_coords}')
-            cv2.line(image, (x, y), (img_node[0], height + img_node[1]), (255, 125, 38), 7)
             cv2.imshow('Image', image)
+            # cv2.line(image, (x, y), (img_node[0], height + img_node[1]), (255, 125, 38), 7)
             end = osm_node
             selected_algorithm = choose_algorithm()
             print(f"Selected Algorithm: {selected_algorithm}")
-
             ans = None
             if selected_algorithm == 'dijkstra':
                 ans = dijkstra_path(G, start, end, weight='length')
@@ -146,10 +148,9 @@ def click_event(event, x, y, flags, param):
                 ans = astar_path(G, start, end, weight='length')
             elif selected_algorithm == 'bfs':
                 ans = bfs(G, start, end)
-
+            image_2 = image.copy()
+            cv2.line(image, (node1_start[0], node1_start[1]), (node2_start[0], height + node2_start[1]), (0, 255, 0), 7)
             if ans:
-                cv2.imshow('Image', image)
-                image_2 = image.copy()
                 for i in range(len(ans) - 1):
                     node1 = ans[i]
                     node2 = ans[i + 1]
@@ -170,7 +171,9 @@ def click_event(event, x, y, flags, param):
                         cv2.imshow('Image', image)
                         cv2.waitKey(20)
                 image = image_2.copy()
-                cv2.imshow('Image', image) 
+                cv2.imshow('Image', image)
+                cv2.line(image, (node1_start[0], node1_start[1]), (node2_start[0], height + node2_start[1]), (255, 125, 38), 7)
+                cv2.line(image, (node1_end[0], node1_end[1]), (node2_end[0], height + node2_end[1]), (255, 125, 38), 7)
                 for i in range(len(ans) - 1):
                     node1 = ans[i]
                     node2 = ans[i + 1]
