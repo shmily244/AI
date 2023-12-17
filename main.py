@@ -122,7 +122,8 @@ def click_event(event, x, y, flags, param):
             osm_coords = convert_coords(img_coords)
             osm_node = ox.distance.nearest_nodes(G, osm_coords[0], osm_coords[1])
             img_node = convert_coords_reverse((G.nodes[osm_node]['x'], G.nodes[osm_node]['y']))
-            draw_coordinates(image, (x, y), f'Start{osm_coords}')
+            cv2.circle(image, (x, y), 10, (0, 0, 255), -1)
+            draw_coordinates(image, (x, y), '  Start')
             cv2.imshow('Image', image)  
             # cv2.line(image, (x, y), (img_node[0], height + img_node[1]), (255, 125, 38), 7)
             start = osm_node
@@ -135,7 +136,8 @@ def click_event(event, x, y, flags, param):
             img_node = convert_coords_reverse((G.nodes[osm_node]['x'], G.nodes[osm_node]['y']))
             node1_end = (x,y)
             node2_end = img_node
-            draw_coordinates(image, (x, y), f'End{osm_coords}')
+            cv2.circle(image, (x, y), 10, (0, 0, 255), -1)
+            draw_coordinates(image, (x, y), '  End')
             cv2.imshow('Image', image)
             # cv2.line(image, (x, y), (img_node[0], height + img_node[1]), (255, 125, 38), 7)
             end = osm_node
@@ -161,7 +163,7 @@ def click_event(event, x, y, flags, param):
                     cv2.line(image, (node1_img[0], height + node1_img[1]), (node2_img[0], height + node2_img[1]), (0, 255, 0), 7)
                     cv2.imshow('Image', image)
                     print(f'Node {i + 1}: OSM Coordinates = ({node1_img[0]:.5f}, {node1_img[1]:.5f})')
-                    cv2.waitKey(20)
+                    cv2.waitKey(10)
                     
                     for edge in G.edges(node1):
                         u, v = edge
@@ -169,7 +171,7 @@ def click_event(event, x, y, flags, param):
                         v_img = convert_coords_reverse((G.nodes[v]['x'], G.nodes[v]['y']))
                         cv2.line(image, (u_img[0], height + u_img[1]), (v_img[0], height + v_img[1]), (0, 255, 0), 7)
                         cv2.imshow('Image', image)
-                        cv2.waitKey(20)
+                        cv2.waitKey(10)
                 image = image_2.copy()
                 cv2.imshow('Image', image)
                 cv2.line(image, (node1_start[0], node1_start[1]), (node2_start[0], height + node2_start[1]), (255, 125, 38), 7)
